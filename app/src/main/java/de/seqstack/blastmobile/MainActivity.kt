@@ -39,8 +39,8 @@ import kotlinx.coroutines.withContext
 private val BoratDark = Color(0xFF07554F)
 private val BoratOlive = Color(0xFF668442)
 private val Bg = Color(0xFFF7F9FB)
-private const val KAL_C_R1_ASSET = "testdata/Kal_C_test_R1.fastq.gz"
-private const val KAL_C_R2_ASSET = "testdata/Kal_C_test_R2.fastq.gz"
+private const val KAL_C_R1_ASSET = "testdata/Kal_C_test_R1.fastq.dat"
+private const val KAL_C_R2_ASSET = "testdata/Kal_C_test_R2.fastq.dat"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,7 +88,7 @@ private fun BoratApp(displayName: (Uri) -> String) {
     val bundledTestAvailable = remember(context) {
         runCatching {
             val names = context.assets.list("testdata").orEmpty().toSet()
-            "Kal_C_test_R1.fastq.gz" in names && "Kal_C_test_R2.fastq.gz" in names
+            "Kal_C_test_R1.fastq.dat" in names && "Kal_C_test_R2.fastq.dat" in names
         }.getOrDefault(false)
     }
 
