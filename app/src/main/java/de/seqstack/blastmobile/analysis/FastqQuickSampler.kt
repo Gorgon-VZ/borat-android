@@ -10,6 +10,7 @@ import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.util.Collections
 import java.util.Random
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
@@ -71,7 +72,7 @@ class FastqQuickSampler(private val context: Context) {
         }
         require(inspected > 0) { "No complete read pairs found" }
 
-        reservoir.shuffle(random)
+        Collections.shuffle(reservoir, random)
         val dir = File(context.filesDir, "jobs/$sampleId").apply { mkdirs() }
         val fasta = File(dir, "blast_input.fasta")
         val manifest = File(dir, "pair_manifest.tsv")
