@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "de.seqstack.blastmobile"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "de.seqstack.blastmobile"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 5
         versionName = "0.5.0"
     }
