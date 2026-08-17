@@ -23,6 +23,41 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
+      - name: Restore bundled Kal_C test data
+        id: kalc-cache
+        uses: actions/cache@v4
+        with:
+          path: app/src/main/assets/testdata
+          key: kal-c-err3479086-first11300-v1
+
+      - name: Prepare bundled Kal_C test data
+        if: steps.kalc-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_KALC="$RUNNER_TEMP/kalc"
+          mkdir -p "$TMP_KALC" app/src/main/assets/testdata
+          BASE_URL="https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR347/006/ERR3479086"
+          curl --fail --location --retry 4 --retry-delay 3 \
+            "$BASE_URL/ERR3479086_1.fastq.gz" \
+            --output "$TMP_KALC/ERR3479086_1.fastq.gz"
+          curl --fail --location --retry 4 --retry-delay 3 \
+            "$BASE_URL/ERR3479086_2.fastq.gz" \
+            --output "$TMP_KALC/ERR3479086_2.fastq.gz"
+          python3 scripts/prepare_kalc_testdata.py \
+            "$TMP_KALC/ERR3479086_1.fastq.gz" \
+            "$TMP_KALC/ERR3479086_2.fastq.gz" \
+            app/src/main/assets/testdata/Kal_C_test_R1.fastq.gz \
+            app/src/main/assets/testdata/Kal_C_test_R2.fastq.gz
+
+      - name: Verify bundled test data
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/src/main/assets/testdata/Kal_C_test_R1.fastq.gz
+          test -s app/src/main/assets/testdata/Kal_C_test_R2.fastq.gz
+          ls -lh app/src/main/assets/testdata/
+
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
         with:
