@@ -9,6 +9,7 @@ import de.seqstack.blastmobile.model.QcTile
 import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.File
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.Collections
 import java.util.Random
@@ -16,7 +17,12 @@ import java.util.zip.GZIPInputStream
 import kotlin.math.max
 
 class FastqQuickSampler(private val context: Context) {
-    data class InputFastq(val uri: Uri, val name: String)
+    data class InputFastq(
+        val uri: Uri? = null,
+        val name: String,
+        val assetPath: String? = null,
+    )
+
     private data class Record(val header: String, val seq: String, val qual: String)
     private data class PairRec(val id: String, val r1: String, val r2: String)
 
@@ -128,12 +134,18 @@ class FastqQuickSampler(private val context: Context) {
     }
 
     private fun openReader(input: InputFastq): BufferedReader {
-        val raw = context.contentResolver.openInputStream(input.uri) ?: error("Cannot open ${input.name}")
+        val raw: InputStream = when {
+            input.assetPath != null -> context.assets.open(input.assetPath)
+            input.uri != null -> context.contentResolver.openInputStream(input.uri)
+                ?: error("Cannot open ${input.name}")
+            else -> error("No source configured for ${input.name}")
+        }
         val buffered = BufferedInputStream(raw,128*1024)
         buffered.mark(4); val a=buffered.read(); val b=buffered.read(); buffered.reset()
         val stream = if(a==0x1f && b==0x8b) GZIPInputStream(buffered,128*1024) else buffered
         return BufferedReader(InputStreamReader(stream,Charsets.US_ASCII),128*1024)
     }
+
     private fun readRecord(r:BufferedReader):Record? {
         val h=r.readLine()?:return null; val s=r.readLine()?:error("Truncated FASTQ")
         val plus=r.readLine()?:error("Truncated FASTQ"); val q=r.readLine()?:error("Truncated FASTQ")
@@ -141,6 +153,7 @@ class FastqQuickSampler(private val context: Context) {
         require(s.length==q.length) { "Sequence/quality length mismatch" }
         return Record(h,s,q)
     }
+
     private fun canonicalId(h:String)=h.removePrefix("@").substringBefore(' ').removeSuffix("/1").removeSuffix("/2")
     private fun hasAdapter(s:String):Boolean { val u=s.uppercase(); return ADAPTERS.any { u.contains(it) } }
 }
