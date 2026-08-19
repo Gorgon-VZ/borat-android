@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,8 +69,30 @@ jobs:
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: BORAT-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish stable latest APK link
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk BORAT-latest.apk
+
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest BORAT-latest.apk --clobber
+            gh release edit latest \
+              --title "BORAT Latest Android Build" \
+              --notes "Automatically updated from main at commit ${GITHUB_SHA}." \
+              --latest
+          else
+            gh release create latest BORAT-latest.apk \
+              --target "${GITHUB_SHA}" \
+              --title "BORAT Latest Android Build" \
+              --notes "Automatically updated from main at commit ${GITHUB_SHA}." \
+              --latest
+          fi
